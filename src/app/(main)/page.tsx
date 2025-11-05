@@ -13,6 +13,7 @@ export default async function Home() {
             {/* <Button size='small' type="primary">Button</Button>
       <TestPAge /> */}
             trang chủ
+            <TestPAge/>
         </div>
     );
 }

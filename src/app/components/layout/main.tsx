@@ -65,7 +65,7 @@ export default function MainLayoutComponent({
                 <div
                     style={{
                         background: colorBgContainer,
-                        minHeight: 350,
+                        minHeight: 'calc(100vh - 30vh)',
                         padding: 24,
                         borderRadius: borderRadiusLG,
                     }}
