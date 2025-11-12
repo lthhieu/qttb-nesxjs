@@ -1,4 +1,4 @@
-import TestPAge from '@/app/components/test';
+import TestPAge from '@/components/test';
 import { auth } from '@/lib/auth';
 import { Button } from 'antd';
 import { headers } from 'next/headers';
@@ -13,7 +13,7 @@ export default async function Home() {
             {/* <Button size='small' type="primary">Button</Button>
       <TestPAge /> */}
             trang chủ
-            <TestPAge/>
+            <TestPAge />
         </div>
     );
 }

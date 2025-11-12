@@ -10,7 +10,8 @@ const { Header, Content, Footer } = Layout;
 const items = [
     { key: 1, label: <Link href="/">Người dùng</Link> },
     { key: 2, label: <Link href="/documents">Văn bản</Link> },
-    { key: 3, label: <Link href="/histories">Lịch sử</Link> },
+    { key: 3, label: <Link href="/workflows">Quy trình</Link> },
+    { key: 4, label: <Link href="/histories">Lịch sử</Link> },
 ]
 
 export default function MainLayoutComponent({
@@ -65,7 +66,7 @@ export default function MainLayoutComponent({
                 <div
                     style={{
                         background: colorBgContainer,
-                        minHeight: 'calc(100vh - 30vh)',
+                        minHeight: 'calc(100vh - 35vh)',
                         padding: 24,
                         borderRadius: borderRadiusLG,
                     }}

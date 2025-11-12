@@ -1,0 +1,44 @@
+import TableWorkflows from "@/components/workflows/table";
+import { auth } from "@/lib/auth";
+import { sendRequest } from "@/lib/fetch-wrapper";
+import { headers } from "next/headers";
+
+type Params = Promise<{ page: string; limit: string }>
+
+export default async function Workflows({ searchParams }: { searchParams: Params }) {
+    const { limit = 5, page = 1 } = await searchParams
+    const session = await auth.api.getSession({
+        headers: await headers() // you need to pass the headers object.
+    })
+    const res = await sendRequest<IBackendResponse<IPaginate<IWorkflow[]>>>({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows`,
+        queryParams: { page, limit },
+        headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+        },
+    })
+    const res1 = await sendRequest<IBackendResponse<IUnit[]>>({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/units`,
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+        },
+    })
+    const res2 = await sendRequest<IBackendResponse<IUnit[]>>({
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/positions`,
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+        },
+    })
+    return (
+        <div>
+            <TableWorkflows
+                access_token={session?.access_token ?? ''}
+                units={res1?.data ?? []}
+                meta={res?.data?.meta!}
+                positions={res2?.data ?? []}
+                workflows={res?.data?.result ?? []} />
+        </div>
+    );
+}

@@ -1,5 +1,5 @@
 
-import MainLayoutComponent from "@/app/components/layout/main";
+import MainLayoutComponent from "@/components/layout/main";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

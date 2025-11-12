@@ -1,4 +1,4 @@
-import LoginComponent from "@/app/components/auth/login"
+import LoginComponent from "@/components/auth/login"
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from "next/navigation";
