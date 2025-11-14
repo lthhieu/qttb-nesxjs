@@ -67,4 +67,41 @@ declare global {
         "createdAt": string,
         "updatedAt": string
     }
+    interface IUserInfo {
+        "user": {
+            "_id": string,
+            "name": string
+        },
+        "unit"?: {
+            "_id"?: string,
+            "name"?: string
+        },
+        "position"?: {
+            "_id"?: string,
+            "name"?: string
+        }
+    }
+    interface IDocument {
+        "_id": string,
+        "name": string,
+        "author": IUserInfo,
+        "workflow": string,
+        "cur_version": number,
+        "cur_status": string,
+        "cur_link": string,
+        "info": [
+            {
+                "version": number,
+                "link": string,
+                "singers": IUserInfo[]
+            }
+        ],
+        "createdAt": string,
+        "updatedAt": string
+    }
+    interface IFile {
+        filename: string,
+        folder: string,
+        link: string
+    }
 }

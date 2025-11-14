@@ -1,3 +1,4 @@
+"use client"
 import { Modal, Form, Input, InputNumber, message, Card, Space, Button, Typography, Select } from 'antd';
 import { sendRequest } from '@/lib/fetch-wrapper';
 import { useRouter } from 'next/navigation'
@@ -111,7 +112,6 @@ const WorkflowModal = (props: IProps) => {
                 <Form
                     form={form}
                     autoComplete="off"
-
                     layout='vertical'
                     name="workflow-modal"
                     onFinish={onFinish}
@@ -158,9 +158,10 @@ const WorkflowModal = (props: IProps) => {
                                                 {(subFields, subOpt) => (
                                                     <div style={{ display: 'flex', flexDirection: 'column', rowGap: 16 }}>
                                                         {subFields.map((subField) => (
-                                                            <Space key={subField.key}>
+                                                            <Space style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }} key={subField.key}>
                                                                 <Form.Item noStyle name={[subField.name, 'position']}>
                                                                     <Select
+                                                                        style={{ minWidth: 250 }}
                                                                         showSearch
                                                                         placeholder="Vui lòng chọn chức vụ"
                                                                         optionFilterProp="label"
@@ -170,12 +171,12 @@ const WorkflowModal = (props: IProps) => {
                                                                             value: _id,
                                                                             label: name
                                                                         })) : []
-
                                                                         }
                                                                     />
                                                                 </Form.Item>
                                                                 <Form.Item noStyle name={[subField.name, 'unit']}>
                                                                     <Select
+                                                                        style={{ minWidth: 250 }}
                                                                         showSearch
                                                                         placeholder="Vui lòng chọn đơn vị"
                                                                         optionFilterProp="label"

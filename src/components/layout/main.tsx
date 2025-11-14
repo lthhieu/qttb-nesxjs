@@ -14,6 +14,10 @@ const items = [
     { key: 4, label: <Link href="/histories">Lịch sử</Link> },
 ]
 
+const itemsNotLogin = [
+    { key: 1, label: <Link href="/">Người dùng</Link> },
+]
+
 export default function MainLayoutComponent({
     children,
 }: Readonly<{
@@ -54,7 +58,7 @@ export default function MainLayoutComponent({
                     theme="light"
                     mode="horizontal"
                     defaultSelectedKeys={['1']}
-                    items={items}
+                    items={session ? items : itemsNotLogin}
                     style={{ flex: 1, minWidth: 0 }}
                 />
                 <div>{session ? <div style={{ display: 'flex', gap: 16 }}>

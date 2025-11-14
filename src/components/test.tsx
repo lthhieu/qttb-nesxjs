@@ -16,15 +16,18 @@ const TestPAge = () => {
     }
     const clickMe = async () => {
         const socket = io('http://localhost:8000');
-        socket.emit('events', { name: 'Hello server!' }, (data:any) =>  alert(data));
+        socket.emit('events', { name: 'Hello server!' }, (data: any) => alert(data));
     }
     return (
         <>
             {session ? <>
                 <div>Hello {session?.user.name}</div>
                 <p>{session?.user.email}</p>
-                <button onClick={handleSignout}>Đăng xuất</button></> : <p>Chưa đăng nhập</p>}<br />
-                <Button onClick={()=>clickMe()} color="pink" variant="solid">Socket io</Button>
+                {/* <button onClick={handleSignout}>Đăng xuất</button> */}
+            </> : <p>Chưa đăng nhập</p>
+            }
+            <br />
+            {/* <Button onClick={()=>clickMe()} color="pink" variant="solid">Socket io</Button> */}
         </>
     )
 }

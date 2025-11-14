@@ -1,5 +1,4 @@
 import queryString from 'query-string'
-import slugify from 'slugify'
 
 export const sendRequest = async <T>(props: IRequest) => {
     let {
@@ -50,9 +49,8 @@ export const sendRequestFile = async <T>(props: IRequest) => {
     } = props
     const options: any = {
         method: method,
-        // by default setting the content-type to be json type
-        headers: new Headers({ 'content-type': 'application/json', ...headers }),
         body: body ? body : null,
+        headers: new Headers({ ...headers }),
         ...nextOption
     };
     if (useCredentials) options.credentials = "include";
