@@ -5,8 +5,8 @@ import type { PopconfirmProps, TableProps } from 'antd';
 import { DeleteOutlined, EditOutlined, FolderAddOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import WorkflowModal from '@/components/workflows/modal';
-import { sendRequest } from '@/lib/fetch-wrapper';
 import { useRouter } from 'next/navigation';
+import { handleDeleteNewWorkflow } from '@/app/(main)/workflows/actions';
 
 
 interface IProps {
@@ -31,21 +31,15 @@ const TableWorkflows = (props: IProps) => {
     }
     const [messageApi, contextHolder] = message.useMessage();
     const confirm = (_id: string) => {
-        deleteUser(_id)
+        deleteWorkflow(_id)
     };
 
     const cancel: PopconfirmProps['onCancel'] = (e) => {
         // console.log(e);
     };
 
-    const deleteUser = async (_id: string) => {
-        const res = await sendRequest<IBackendResponse<IWorkflow>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows/${_id}`,
-            method: 'DELETE',
-            headers: {
-                Authorization: `Bearer ${access_token!}`,
-            },
-        })
+    const deleteWorkflow = async (_id: string) => {
+        const res = await handleDeleteNewWorkflow(_id, access_token)
         if (!res.data) {
             messageApi.open({
                 type: 'error',
@@ -57,7 +51,6 @@ const TableWorkflows = (props: IProps) => {
                 type: 'success',
                 content: res.message,
             });
-            router.refresh()
         }
     }
 

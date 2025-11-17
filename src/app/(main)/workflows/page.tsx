@@ -16,6 +16,9 @@ export default async function Workflows({ searchParams }: { searchParams: Params
         headers: {
             Authorization: `Bearer ${session?.access_token}`,
         },
+        nextOption: {
+            next: { tags: ['workflows'] }
+        }
     })
     const res1 = await sendRequest<IBackendResponse<IUnit[]>>({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/units`,

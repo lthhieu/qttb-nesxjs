@@ -1,9 +1,8 @@
 "use client"
 import { Modal, Form, Input, InputNumber, message, Card, Space, Button, Typography, Select } from 'antd';
-import { sendRequest } from '@/lib/fetch-wrapper';
-import { useRouter } from 'next/navigation'
 import { useEffect } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
+import { handleCreateOrUpdateNewWorkflow } from '@/app/(main)/workflows/actions';
 
 interface IProps {
     access_token?: string,
@@ -22,7 +21,6 @@ interface IProps {
 const WorkflowModal = (props: IProps) => {
     const { setIsModalOpen, isModalOpen, setStatus, status, access_token, units, positions, setDataUpdate, dataUpdate } = props
     const [form] = Form.useForm()
-    const router = useRouter()
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
@@ -50,20 +48,14 @@ const WorkflowModal = (props: IProps) => {
     const onFinish = async (values: IWorkflow) => {
         const { name, version, steps } = values
         const stepsWithOrder = steps != undefined && steps.length > 0 ? steps.map((s, i) => ({ ...s, order: i })) : [];
-        const response = await sendRequest<IBackendResponse<IWorkflow>>({
-            url: status === "CREATE" ? `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows` : `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows/${dataUpdate?._id}`,
-            method: status === "CREATE" ? "POST" : "PATCH",
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-            },
-            body: { name, version, steps: stepsWithOrder }
-        })
+
+        const data = { name, version, steps: stepsWithOrder }
+        const response = await handleCreateOrUpdateNewWorkflow(data, access_token ?? '', status, dataUpdate)
         if (response.data) {
             messageApi.open({
                 type: 'success',
                 content: response.message,
             });
-            router.refresh()
             handleCancel()
         } else {
             messageApi.open({
