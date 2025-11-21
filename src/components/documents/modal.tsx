@@ -80,8 +80,9 @@ const DocumentModal = (props: IProps) => {
                 content: response.message,
             });
             setFileList([]);
-            router.refresh()
             handleCancel()
+            router.refresh()
+
         } else {
             console.log(response.error)
         }
@@ -109,7 +110,7 @@ const DocumentModal = (props: IProps) => {
             url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/files/upload`,
             method: 'post',
             body: formData,
-            headers: { "folder_type": workflow }
+            headers: { "folder_type": "documents" }
         })
         if (res.data) {
             return res.data.link

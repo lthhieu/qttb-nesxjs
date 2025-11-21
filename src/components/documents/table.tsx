@@ -2,11 +2,12 @@
 import { useState } from 'react';
 import { Button, Flex, message, Popconfirm, Space, Table, Tag } from 'antd';
 import type { PopconfirmProps, TableProps } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, FolderAddOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, FolderAddOutlined, MinusCircleOutlined, SignatureOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { sendRequest } from '@/lib/fetch-wrapper';
 import { useRouter } from 'next/navigation';
 import DocumentModal from '@/components/documents/modal';
+import SignModal from '@/components/documents/sign.modal';
 
 
 interface IProps {
@@ -42,6 +43,7 @@ export const STATUS_MAP: Record<
 const TableDocuments = (props: IProps) => {
     const { access_token, meta, documents, workflows } = props
     const [isModalOpen, SetIsModalOpen] = useState(false)
+    const [isSignModalOpen, SetIsSignModalOpen] = useState(false)
     const [status, setStatus] = useState('')
     const [dataUpdate, setDataUpdate] = useState<null | IDocument>(null)
     const router = useRouter()
@@ -121,7 +123,7 @@ const TableDocuments = (props: IProps) => {
             render: (_, record) => (
                 <Space size="middle">
 
-                    <Button color="default" variant="outlined" icon={<DownloadOutlined />}
+                    {/* <Button color="default" variant="outlined" icon={<DownloadOutlined />}
                         onClick={() => {
                             const link = document.createElement("a");
                             link.href = record.cur_link;              // link file trực tiếp
@@ -131,7 +133,18 @@ const TableDocuments = (props: IProps) => {
                             link.click();
                             document.body.removeChild(link);
                         }}
+                    ></Button> */}
+                    <Button color="default" variant="outlined" icon={<SignatureOutlined />}
+                        // onClick={() => {
+                        //     console.log("data", record)
+                        // }}
+                        onClick={() => {
+                            setDataUpdate(record)
+                            // setStatus("UPDATE")
+                            SetIsSignModalOpen(true)
+                        }}
                     ></Button>
+
 
                     <Button color="green" variant="outlined" icon={<EditOutlined />}
                         onClick={() => {
@@ -162,6 +175,7 @@ const TableDocuments = (props: IProps) => {
             {contextHolder}
             <Flex style={{ marginBottom: 16 }} justify='space-between' align='center'>
                 <h2>Danh sách tài liệu</h2>
+                {/* <ViewPdf /> */}
                 <Button onClick={showModal} type='primary' icon={<FolderAddOutlined />}>Thêm mới</Button>
             </Flex>
             <Table<IDocument>
@@ -186,6 +200,14 @@ const TableDocuments = (props: IProps) => {
                 setDataUpdate={setDataUpdate}
                 dataUpdate={dataUpdate}
             />
+            <SignModal
+                isModalOpen={isSignModalOpen}
+                setIsModalOpen={SetIsSignModalOpen}
+                setDataUpdate={setDataUpdate}
+                dataUpdate={dataUpdate}
+                access_token={access_token}
+            />
+            {/* <PDFJSViewer /> */}
         </>
     )
 }

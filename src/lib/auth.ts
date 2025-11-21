@@ -3,6 +3,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import { createAuthMiddleware, customSession } from "better-auth/plugins";
 import { sendRequest } from "@/lib/fetch-wrapper";
+import { inferAdditionalFields } from "better-auth/client/plugins";
 
 const client = new MongoClient(process.env.MONGO_URI!);
 const db = client.db();
@@ -33,7 +34,8 @@ export const auth = betterAuth({
                     user: {
                         ...user,
                         id: response.data?.user._id,
-                        role: response.data?.user.role
+                        role: response.data?.user.role,
+                        p12: response.data?.user.p12
                     },
                     access_token: response.data?.access_token,
                     refresh_token: response.data?.refresh_token,

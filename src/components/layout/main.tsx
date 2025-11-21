@@ -8,10 +8,11 @@ import Link from 'next/link';
 const { Header, Content, Footer } = Layout;
 
 const items = [
-    { key: 1, label: <Link href="/">Người dùng</Link> },
-    { key: 2, label: <Link href="/documents">Văn bản</Link> },
-    { key: 3, label: <Link href="/workflows">Quy trình</Link> },
-    { key: 4, label: <Link href="/histories">Lịch sử</Link> },
+    { key: 1, label: <Link href="/">Trang chủ</Link> },
+    { key: 2, label: <Link href="/users">Tài khoản</Link> },
+    { key: 3, label: <Link href="/documents">Văn bản</Link> },
+    { key: 4, label: <Link href="/workflows">Quy trình</Link> },
+    { key: 5, label: <Link href="/histories">Lịch sử</Link> },
 ]
 
 const itemsNotLogin = [

@@ -27,6 +27,7 @@ declare global {
         email: string,
         image: string,
         role: string,
+        p12: string,
         createdAt: string,
         updatedAt: string
     }
