@@ -1,7 +1,7 @@
 'use server'
 
 import { sendRequest } from "@/lib/fetch-wrapper"
-import { revalidateTag } from "next/cache"
+import { updateTag } from "next/cache"
 
 export const handleCreateOrUpdateNewWorkflow = async (data: any, access_token: string, status: string, dataUpdate?: null | IWorkflow) => {
     const { name, version, steps } = data
@@ -13,7 +13,7 @@ export const handleCreateOrUpdateNewWorkflow = async (data: any, access_token: s
         },
         body: { name, version, steps }
     })
-    revalidateTag('workflows', '')
+    updateTag('workflows')
     return res
 }
 
@@ -25,6 +25,6 @@ export const handleDeleteNewWorkflow = async (_id: string, access_token: string)
             Authorization: `Bearer ${access_token!}`,
         },
     })
-    revalidateTag('workflows', '')
+    updateTag('workflows')
     return res
 }

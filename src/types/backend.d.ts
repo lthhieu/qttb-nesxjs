@@ -23,11 +23,13 @@ declare global {
     }
     interface IUser {
         _id: string,
-        fullname: string,
+        name: string,
         email: string,
         image: string,
         role: string,
         p12: string,
+        unit?: string | null,
+        position?: string | null,
         createdAt: string,
         updatedAt: string
     }
@@ -86,15 +88,28 @@ declare global {
         "_id": string,
         "name": string,
         "author": IUserInfo,
-        "workflow": string,
+        "workflow": {
+            "steps":
+            {
+                "order"?: number,
+                "signers": [
+                    {
+                        "unit"?: string | null,
+                        "position"?: string | null
+                    }
+                ]
+            }[],
+            _id: string
+        },
         "cur_version": number,
+        "cur_step": number,
         "cur_status": string,
         "cur_link": string,
         "info": [
             {
                 "version": number,
                 "link": string,
-                "singers": IUserInfo[]
+                "signers": IUserInfo[]
             }
         ],
         "createdAt": string,

@@ -1,48 +1,56 @@
+// components/SignModal.tsx - PHIÊN BẢN HOÀN CHỈNH CUỐI CÙNG
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Modal, Button, Upload, Input, message, Space, Spin, Switch, Empty } from "antd";
-import type { GetProp, UploadFile, UploadProps } from 'antd';
-import { UploadOutlined, LoadingOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
-import { sendRequest, sendRequestFile } from "@/lib/fetch-wrapper";
+import { Modal, Button, message, Space, Spin, Input } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+import { sendRequest } from "@/lib/fetch-wrapper";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/webpack";
 import { authClient } from "@/lib/auth-client";
+import { useRouter } from 'next/navigation'
+
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.worker.min.js`;
 
 interface IProps {
     isModalOpen: boolean;
     setIsModalOpen: (v: boolean) => void;
-    dataUpdate?: null | IDocument;
+    dataUpdate?: IDocument | null;
     setDataUpdate: (v: any) => void;
     access_token?: string;
 }
 
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
-
-type SelectionPixel = {
+type Selection = {
     page: number;
-    x: number; y: number; width: number; height: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 };
 
 export default function SignModal(props: IProps) {
     const { isModalOpen, setIsModalOpen, dataUpdate, setDataUpdate, access_token } = props;
+
     const [messageApi, contextHolder] = message.useMessage();
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
-    const [uploading, setUploading] = useState(false);
-    const [password, setPassword] = useState('')
+    const [loadingPdf, setLoadingPdf] = useState(true);
+    const [signing, setSigning] = useState(false);
+    const router = useRouter()
 
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const viewerInstanceRef = useRef<any>(null);
-    const overlayRef = useRef<HTMLDivElement | null>(null);
+    // Modal nhập mật khẩu
+    const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+    const [password, setPassword] = useState("");
 
-    const dragRef = useRef<{ isDrawing: boolean; startX: number; startY: number }>({
-        isDrawing: false, startX: 0, startY: 0
-    });
+    // PDF.js
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const pdfRef = useRef<any>(null);
 
-    const [selection, setSelection] = useState<SelectionPixel | null>(null);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [pageCount, setPageCount] = useState<number>(1);
-    const [isSigning, setIsSigning] = useState(false);
-    const [isLoadingPdf, setIsLoadingPdf] = useState(false);
-    const [isDrawMode, setIsDrawMode] = useState(false);
+    const [numPages, setNumPages] = useState(0);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [scale] = useState(1.5);
+
+    const [selection, setSelection] = useState<Selection | null>(null);
+    const [preview, setPreview] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
 
     const {
         data: session,
@@ -51,278 +59,333 @@ export default function SignModal(props: IProps) {
         refetch //refetch the session
     } = authClient.useSession()
 
-    const handleSign = async () => {
-        let data: any = {}
-        if (password == '') { alert('Nhập mật khẩu'); return; }
-        data['password'] = password
+    // console.log(dataUpdate)
 
-        // 1. Tạo đối tượng URL
-        const document_url = new URL(dataUpdate?.cur_link ?? '');
-        // 2. Lấy searchParams
-        const document_filename = document_url.searchParams.get("name");
-        data['document_filename'] = document_filename
+    // Load PDF
+    useEffect(() => {
+        if (!isModalOpen || !dataUpdate?.cur_link) return;
 
-        // 1. Tạo đối tượng URL
-        //@ts-ignore
-        const p12_url = new URL(session?.user?.p12 ?? '');
-        // 2. Lấy searchParams
-        const p12_filename = p12_url.searchParams.get("name");
-        data['p12_filename'] = p12_filename
+        const load = async () => {
+            setLoadingPdf(true);
+            try {
+                const pdf = await getDocument(dataUpdate.cur_link).promise;
+                pdfRef.current = pdf;
+                setNumPages(pdf.numPages);
+                renderPage(1);
+                setPageNumber(1);
+                setSelection(null);
+            } catch (err) {
+                messageApi.error("Không thể tải tài liệu");
+            }
+        };
+        load();
+    }, [isModalOpen, dataUpdate?.cur_link]);
 
-        if (!selection) { alert('Chọn vùng ký'); return; }
-        const pdfCoords = await convertSelectionToPdfCoords(selection);
-        console.log(pdfCoords)
-        data['SIGN_X'] = JSON.stringify(pdfCoords.x) ?? '100'
-        data['SIGN_Y'] = JSON.stringify(pdfCoords.y) ?? '100'
-        data['SIGN_WIDTH'] = JSON.stringify(pdfCoords.width) ?? '250'
-        data['SIGN_HEIGHT'] = JSON.stringify(pdfCoords.height) ?? '80'
-        data['page'] = JSON.stringify(0) ?? '1'
+    const renderPage = async (num: number) => {
+        if (!canvasRef.current || !pdfRef.current) return;
+        setLoadingPdf(true);
 
-        setUploading(true);
-        // You can use any AJAX library you like
-        const res = await sendRequest<IBackendResponse<any>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/sign/documents`,
-            method: 'post',
-            body: data,
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-            },
-        })
-        if (res.data) {
-            setFileList([]);
-            setSelection(null)
-            setPassword('')
-            setIsDrawMode(false);
+        const page = await pdfRef.current.getPage(num);
+        const viewport = page.getViewport({ scale });
 
-            messageApi.open({
-                type: 'success',
-                content: `Upload successfully`,
-            });
-            setUploading(false);
+        const canvas = canvasRef.current;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const ctx = canvas.getContext("2d")!;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        setLoadingPdf(false);
+
+        if (overlayRef.current) {
+            overlayRef.current.style.width = `${viewport.width}px`;
+            overlayRef.current.style.height = `${viewport.height}px`;
         }
     };
 
-    const uploadProps: UploadProps = {
-        multiple: false,
-        onRemove: (file) => {
-            const index = fileList.indexOf(file);
-            const newFileList = fileList.slice();
-            newFileList.splice(index, 1);
-            setFileList(newFileList);
-        },
-        beforeUpload: (file) => {
-            const isP12 = file.type === 'application/x-pkcs12';
-            if (!isP12) {
-                messageApi.open({
-                    type: 'error',
-                    content: `${file.name} không phải tài liệu P12`,
-                });
-                return false;
-            }
-            setFileList([...fileList, file]);
-            return isP12 || Upload.LIST_IGNORE;
-        },
-        fileList,
+    useEffect(() => {
+        if (pdfRef.current && pageNumber) renderPage(pageNumber);
+    }, [pageNumber]);
+
+    // Kéo thả vùng ký
+    const handleMouseDown = (e: React.MouseEvent) => {
+        const rect = overlayRef.current!.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        setPreview({ x, y, w: 0, h: 0 });
     };
 
-    // --- LOGIC KÉO THẢ (Giữ nguyên, chỉ thêm check isDrawMode) ---
-    useEffect(() => {
-        const overlay = overlayRef.current;
-        const container = containerRef.current;
-        if (!overlay || !container) return;
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!preview) return;
+        const rect = overlayRef.current!.getBoundingClientRect();
+        const curX = e.clientX - rect.left;
+        const curY = e.clientY - rect.top;
 
-        const getCoords = (e: PointerEvent | MouseEvent) => {
-            const rect = container.getBoundingClientRect();
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top, w: rect.width, h: rect.height };
-        };
+        const x = Math.min(preview.x, curX);
+        const y = Math.min(preview.y, curY);
+        const w = Math.abs(curX - preview.x);
+        const h = Math.max(70, Math.abs(curY - preview.y));
 
-        const onPointerDown = (e: PointerEvent) => {
-            if (!isDrawMode || e.button !== 0) return;
-            e.preventDefault();
-            overlay.setPointerCapture?.(e.pointerId);
-            const { x, y } = getCoords(e);
-            dragRef.current = { isDrawing: true, startX: x, startY: y };
-            setSelection({ page: currentPage, x, y, width: 0, height: 0 });
-        };
+        setPreview({ x, y, w, h });
+    };
 
-        const onPointerMove = (e: PointerEvent) => {
-            if (!isDrawMode || !dragRef.current.isDrawing) return;
-            e.preventDefault();
-            const { x: currX, y: currY, w: maxW, h: maxH } = getCoords(e);
-            const { startX, startY } = dragRef.current;
-            const clampX = Math.max(0, Math.min(currX, maxW));
-            const clampY = Math.max(0, Math.min(currY, maxH));
-            const x = Math.min(startX, clampX);
-            const y = Math.min(startY, clampY);
-            const width = Math.abs(clampX - startX);
-            const height = Math.abs(clampY - startY);
-            setSelection({ page: currentPage, x, y, width, height });
-        };
+    const handleMouseUp = () => {
+        if (!preview) return;
+        if (preview.w < 50 || preview.h < 50) {
+            setPreview(null);
+            return;
+        }
 
-        const onPointerUp = (e: PointerEvent) => {
-            if (!isDrawMode || !dragRef.current.isDrawing) return;
-            dragRef.current.isDrawing = false;
-            try { overlay.releasePointerCapture?.(e.pointerId); } catch { }
-            setSelection(prev => (prev && (prev.width < 5 || prev.height < 5)) ? null : prev);
-        };
+        setSelection({
+            page: pageNumber,
+            x: preview.x,
+            y: preview.y,
+            width: preview.w,
+            height: preview.h,
+        });
+        messageApi.success("Đã chọn vị trí ký!");
+        setPreview(null);
+    };
 
-        overlay.addEventListener("pointerdown", onPointerDown);
-        window.addEventListener("pointermove", onPointerMove);
-        window.addEventListener("pointerup", onPointerUp);
+    // Lấy tọa độ chuẩn PDF (pt)
+    const getPdfCoords = async () => {
+        if (!selection || !pdfRef.current) return null;
+        const page = await pdfRef.current.getPage(selection.page);
+        const viewport = page.getViewport({ scale });
 
-        return () => {
-            overlay.removeEventListener("pointerdown", onPointerDown);
-            window.removeEventListener("pointermove", onPointerMove);
-            window.removeEventListener("pointerup", onPointerUp);
-        };
-    }, [currentPage, isDrawMode]);
-
-    // --- SUBMIT ---
-    async function convertSelectionToPdfCoords(sel: SelectionPixel) {
-        if (!containerRef.current) throw new Error("No container");
-        const viewer = viewerInstanceRef.current;
-        const containerRect = containerRef.current.getBoundingClientRect();
-        let pagePdfWidth = 595, pagePdfHeight = 842;
-
-        try {
-            let ps = null;
-            if (typeof viewer?.getPageSize === "function") ps = viewer.getPageSize(sel.page - 1);
-            else if (viewer?.documentInfo?.pageSizes) ps = viewer.documentInfo.pageSizes[sel.page - 1];
-            if (ps) { pagePdfWidth = ps.width; pagePdfHeight = ps.height; }
-        } catch (e) { }
-
-        const scaleX = pagePdfWidth / containerRect.width;
-        const scaleY = pagePdfHeight / containerRect.height;
+        const pdfWidth = viewport.width / scale;
+        const pdfHeight = viewport.height / scale;
 
         return {
-            page: sel.page,
-            x: Number((sel.x * scaleX).toFixed(2)),
-            y: Number((sel.y * scaleY).toFixed(2)),
-            width: Number((sel.width * scaleX).toFixed(2)),
-            height: Number((sel.height * scaleY).toFixed(2)),
+            x: Number((selection.x / scale).toFixed(1)),
+            y: Number((pdfHeight - (selection.y + selection.height) / scale).toFixed(1)), // đảo Y
+            width: Number((selection.width / scale).toFixed(1)),
+            height: Number((selection.height / scale).toFixed(1)),
+            page: selection.page - 1,
         };
-    }
+    };
 
-    const handleOpenChange = (open: boolean) => {
-        if (open && containerRef.current && window.NutrientViewer) {
-            window.NutrientViewer.load({
-                container: containerRef.current,
-                document: dataUpdate?.cur_link ?? '',
+    // Khi bấm "Ký số ngay" → mở modal nhập mật khẩu
+    const handleOpenPasswordModal = () => {
+        if (!selection) {
+            messageApi.warning("Vui lòng kéo thả để chọn vị trí ký trước!");
+            return;
+        }
+        setPassword("");
+        setPasswordModalOpen(true);
+    };
 
+    // Xác nhận ký với mật khẩu
+    const handleConfirmSign = async () => {
+        if (!password) {
+            messageApi.error("Vui lòng nhập mật khẩu chữ ký số");
+            return;
+        }
+
+        setSigning(true);
+        setPasswordModalOpen(false);
+
+        try {
+            const coords = await getPdfCoords();
+            const document_url = new URL(dataUpdate?.cur_link ?? '');
+            //@ts-ignore
+            const p12_url = new URL(session?.user?.p12 ?? '');
+            const p12_filename = p12_url.searchParams.get("name");
+            const document_filename = document_url.searchParams.get("name");
+            // console.log(dataUpdate)
+
+            const res = await sendRequest<IBackendResponse<any>>({
+                url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/test-update-info/${dataUpdate?._id}`,
+                method: "PATCH",
+                body: {
+                    // Thông tin ký số
+                    password,
+                    p12_filename,
+                    document_filename,
+                    SIGN_X: Math.round(coords?.x ?? 100),
+                    SIGN_Y: Math.round(coords?.y ?? 100),
+                    SIGN_WIDTH: Math.round(coords?.width ?? 250),
+                    SIGN_HEIGHT: Math.round(coords?.height ?? 80),
+                    page: coords?.page ?? 0,
+
+                    // Thông tin cập nhật workflow (backend vẫn dùng để lấy cur_link nếu cần)
+                    cur_link: dataUpdate?.cur_link,
+                    cur_version: dataUpdate?.cur_version,
+                },
+                headers: { Authorization: `Bearer ${access_token}` },
             });
-        } else if (!open && containerRef.current && window.NutrientViewer) {
-            window.NutrientViewer.unload(containerRef.current);
+
+            if (res.data) {
+                messageApi.success("Ký số thành công! Quy trình đã được cập nhật.");
+                setIsModalOpen(false);
+                router.refresh(); // reload lại danh sách để thấy tài liệu biến mất khỏi "cần ký"
+            } else {
+                messageApi.error(res.message || "Ký số thất bại");
+            }
+        } catch (err: any) {
+            messageApi.error(err?.message || "Ký số thất bại");
+        } finally {
+            setSigning(false);
         }
     };
 
-    return (<>
-        {contextHolder}
-        <Modal
-            title={`Ký số: ${dataUpdate?.name || "Tài liệu"}`}
-            open={isModalOpen}
-            onCancel={() => { setIsModalOpen(false); setDataUpdate(null) }}
-            footer={null}
-            width="95%"
-            style={{ top: 20 }}
-            afterOpenChange={handleOpenChange}
-            destroyOnHidden={true}
-        >
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+    return (
+        <>
+            {contextHolder}
 
-                {/* TOOLBAR */}
-                <div style={{ background: "#f5f5f5", padding: "12px", borderRadius: 8, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-                    <div style={{ borderRight: '1px solid #ddd', paddingRight: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontWeight: 500 }}>Chế độ:</span>
-                        <Switch
-                            checkedChildren={<><EditOutlined /> Vẽ vùng ký</>}
-                            unCheckedChildren={<><EyeOutlined /> Xem / Cuộn</>}
-                            checked={isDrawMode}
-                            onChange={(c) => {
-                                setIsDrawMode(c);
+            {/* Modal chính - xem PDF & chọn vị trí */}
+            <Modal
+                open={isModalOpen}
+                onCancel={() => { setIsModalOpen(false); setDataUpdate(null) }}
+                footer={null}
+                width="96%"
+                style={{ top: 20 }}
+                title={<div style={{ fontSize: 22, fontWeight: "bold", textAlign: "center" }}>
+                    Ký số tài liệu: {dataUpdate?.name}
+                </div>}
+            >
+                {/* Thanh điều khiển trên cùng */}
+                <div style={{ textAlign: "center", marginBottom: 20, position: 'sticky', top: 0, zIndex: 9999, borderRadius: '10px', background: '#e0e9efff', padding: '8px 0px' }}>
+                    <Space size={20} align="center">
+                        <Button onClick={() => setPageNumber(p => Math.max(1, p - 1))} disabled={pageNumber === 1}>
+                            Trang trước
+                        </Button>
+                        <span style={{ fontSize: 20, fontWeight: "bold", minWidth: 120 }}>
+                            Trang {pageNumber} / {numPages || "..."}
+                        </span>
+                        <Button onClick={() => setPageNumber(p => Math.min(numPages, p + 1))} disabled={pageNumber === numPages}>
+                            Trang sau
+                        </Button>
+
+                        <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                                setSelection(null);
+                                messageApi.info("Đã xóa vị trí ký");
                             }}
-                        />
-                    </div>
-                    <Upload {...uploadProps}>
-                        <Button icon={<UploadOutlined />}>Tải file p12</Button>
-                    </Upload>
-                    <Input.Password value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mật khẩu" style={{ width: 200 }} />
-                    <Button
-                        type="primary"
-                        onClick={handleSign}
-                        disabled={fileList.length === 0}
-                        loading={uploading}
-                    >
-                        {uploading ? 'Đang tải' : 'Bắt đầu ký'}
-                    </Button>
-                    {selection && <Button danger size="small" onClick={() => setSelection(null)}>Xóa chọn</Button>}
+                            disabled={!selection}
+                        >
+                            Xóa vị trí
+                        </Button>
+
+                        <Button
+                            type="primary"
+                            size="large"
+                            loading={signing}
+                            onClick={handleOpenPasswordModal}
+                            disabled={!selection}
+                            style={{ minWidth: 180, height: 44, fontSize: 16, fontWeight: "bold" }}
+                        >
+                            {signing ? "Đang ký..." : "Ký số ngay"}
+                        </Button>
+                    </Space>
                 </div>
 
-                {/* VIEWER */}
-                <div style={{ display: "flex", gap: 16, height: "70vh" }}>
-                    <div style={{
-                        flex: 1,
-                        position: "relative",
-                        border: "1px solid #ccc",
-                        borderRadius: 4,
-                        overflow: "hidden",
-                        background: "#f0f0f0" // Màu nền xám nhẹ thay vì trắng tinh
-                    }}>
+                {/* PDF Viewer */}
+                <div style={{ position: "relative", display: "inline-block", border: "3px solid #ddd", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
+                    {loadingPdf && (
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Spin size="large" tip="Đang tải tài liệu..." />
+                        </div>
+                    )}
 
-                        {/* CHECK DỮ LIỆU TRƯỚC */}
-                        {!dataUpdate?.cur_link ? (
-                            <div style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', color: '#999' }}>
-                                <Empty description="Không có tài liệu nào được chọn" />
+                    <canvas ref={canvasRef} style={{ display: "block" }} />
+
+                    <div
+                        ref={overlayRef}
+                        style={{ position: "absolute", top: 0, left: 0, cursor: "crosshair" }}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={() => setPreview(null)}
+                    >
+                        {/* Preview khi kéo */}
+                        {preview && (
+                            <div style={{
+                                position: "absolute",
+                                left: preview.x, top: preview.y,
+                                width: preview.w, height: preview.h,
+                                border: "4px solid #ff4d4f",
+                                background: "rgba(255,77,79,0.3)",
+                                borderRadius: 12,
+                                pointerEvents: "none",
+                                boxShadow: "0 0 20px rgba(255,77,79,0.6)",
+                            }}>
+                                <div style={{ color: "#ff4d4f", padding: "8px 16px", borderRadius: "8px 8px 0 0", fontWeight: "bold" }}>
+                                    VỊ TRÍ CHỮ KÝ
+                                </div>
                             </div>
-                        ) : (
-                            <>
-                                {isLoadingPdf && (
-                                    <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                        <Spin indicator={<LoadingOutlined spin style={{ fontSize: 24 }} />} tip="Đang tải thư viện..." />
-                                    </div>
-                                )}
+                        )}
 
-                                <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
-
-                                <div
-                                    ref={overlayRef}
-                                    style={{
-                                        position: "absolute",
-                                        inset: 0,
-                                        zIndex: 20,
-                                        backgroundColor: "transparent",
-                                        pointerEvents: isDrawMode ? "all" : "none",
-                                        cursor: isDrawMode ? "crosshair" : "default",
-                                        touchAction: "none",
-                                        userSelect: "none"
-                                    }}
-                                />
-                                {/* <PDFJSViewer /> */}
-
-                                {selection && (
-                                    <div style={{
-                                        position: "absolute",
-                                        left: selection.x, top: selection.y,
-                                        width: selection.width, height: selection.height,
-                                        border: "2px solid #1890ff",
-                                        backgroundColor: "rgba(24, 144, 255, 0.2)",
-                                        zIndex: 30,
-                                        pointerEvents: "none"
-                                    }}>
-                                        <span style={{ position: "absolute", top: -22, background: "#1890ff", color: "#fff", fontSize: 10, padding: "2px" }}>Vùng ký</span>
-                                    </div>
-                                )}
-                            </>
+                        {/* Vùng đã chọn */}
+                        {selection && selection.page === pageNumber && (
+                            <div style={{
+                                position: "absolute",
+                                left: selection.x, top: selection.y,
+                                width: selection.width, height: selection.height,
+                                border: "4px dashed #52c41a",
+                                background: "rgba(82,196,26,0.2)",
+                                borderRadius: 12,
+                                pointerEvents: "none",
+                            }}>
+                                <div style={{ color: "#52c41a", padding: "8px 16px", borderRadius: "12px 12px 0 0", fontWeight: "bold" }}>
+                                    ĐÃ CHỌN VỊ TRÍ KÝ
+                                </div>
+                            </div>
                         )}
                     </div>
-
-                    {/* SIDEBAR */}
-                    <div style={{ width: 200, background: "#fafafa", padding: 10, fontSize: 12 }}>
-                        <p><strong>Trạng thái:</strong> {isDrawMode ? <span style={{ color: 'red' }}>Đang vẽ</span> : <span style={{ color: 'green' }}>Đang xem</span>}</p>
-                        <p><strong>Trang:</strong> {currentPage}</p>
-                    </div>
                 </div>
-            </Space>
-        </Modal>
-    </>
+
+                <div style={{ textAlign: "center", marginTop: 24, fontSize: 16, color: "#d48806" }}>
+                    Kéo thả chuột trên tài liệu để chọn vị trí ký • Kéo lại để thay đổi
+                </div>
+
+                <div>Danh sách đã ký</div>
+                {dataUpdate?.info && dataUpdate.info.length > 0 ? (
+                    dataUpdate.info.map((item, infoIndex) => (
+                        <div key={infoIndex}>
+                            <p>--- Thông tin ký số phiên bản {infoIndex} ---</p>
+
+                            {item.signers && item.signers.length > 0 ? (
+                                item.signers.map((s, signerIndex) => (
+                                    <p key={signerIndex}>
+                                        {s.user.name} {s.position?.name} {s.unit?.name}
+                                    </p>
+                                ))
+                            ) : (
+                                <p>Không có signer</p>
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <>Chưa có ai ký</>
+                )}
+
+            </Modal>
+
+            {/* Modal nhập mật khẩu khi ký */}
+            <Modal
+                title={<span style={{ fontSize: 18, fontWeight: "bold" }}>Nhập mật khẩu chữ ký số</span>}
+                open={passwordModalOpen}
+                onCancel={() => setPasswordModalOpen(false)}
+                onOk={handleConfirmSign}
+                okText="Ký số"
+                cancelText="Hủy"
+                okButtonProps={{ loading: signing, size: "large", type: "primary" }}
+                cancelButtonProps={{ size: "large" }}
+                centered
+                width={400}
+                zIndex={9998}
+            >
+                <Input.Password
+                    placeholder="Nhập mật khẩu USB Token / File P12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onPressEnter={handleConfirmSign}
+                    size="large"
+                    autoFocus
+                />
+            </Modal>
+        </>
     );
 }

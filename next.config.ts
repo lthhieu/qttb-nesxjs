@@ -13,23 +13,9 @@ const nextConfig: NextConfig = {
         "@nutrient-sdk/viewer": "@nutrient-sdk/viewer",
       });
     }
-
-    config.plugins.push(
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.resolve(
-              __dirname,
-              "node_modules/@nutrient-sdk/viewer/dist",
-            ),
-            to: path.resolve(__dirname, "public"),
-            info: () => ({ minimize: true }),
-            force: true
-          }
-        ]
-      })
-    )
-    return config
+    if (isServer) {
+      config.externals.push('canvas');
+    } return config
   }
 };
 

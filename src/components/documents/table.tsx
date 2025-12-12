@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { Button, Flex, message, Popconfirm, Space, Table, Tag } from 'antd';
 import type { PopconfirmProps, TableProps } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, FolderAddOutlined, MinusCircleOutlined, SignatureOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, EditOutlined, FolderAddOutlined, MinusCircleOutlined, SignatureOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { sendRequest } from '@/lib/fetch-wrapper';
 import { useRouter } from 'next/navigation';
 import DocumentModal from '@/components/documents/modal';
 import SignModal from '@/components/documents/sign.modal';
+import ViewPdf from '@/components/documents/view.pdf';
 
 
 interface IProps {
@@ -154,6 +155,18 @@ const TableDocuments = (props: IProps) => {
                         }}
                     ></Button>
 
+                    <Button
+                        color="pink"
+                        variant="outlined"
+                        icon={<DownloadOutlined />}
+                        onClick={() => {
+                            const link = document.createElement("a")
+                            link.href = record.cur_link
+                            link.download = record.name || "document.pdf"   // đặt tên file tùy ý
+                            link.click()
+                        }}
+                    ></Button>
+
                     <Popconfirm
                         title="Xóa tài liệu này?"
                         onConfirm={() => confirm(record._id)}
@@ -204,7 +217,7 @@ const TableDocuments = (props: IProps) => {
                 isModalOpen={isSignModalOpen}
                 setIsModalOpen={SetIsSignModalOpen}
                 setDataUpdate={setDataUpdate}
-                dataUpdate={dataUpdate}
+                dataUpdate={dataUpdate ?? null}
                 access_token={access_token}
             />
             {/* <PDFJSViewer /> */}
