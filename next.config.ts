@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.externals = config.externals || [];
-      config.externals.push({
-        "@nutrient-sdk/viewer": "@nutrient-sdk/viewer",
-      });
     }
     if (isServer) {
       config.externals.push('canvas');

@@ -117,7 +117,7 @@ const TableUsers = (props: IProps) => {
                     current: meta.current,
                     pageSize: meta.pageSize,
                     total: meta.total,
-                    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                    showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} kết quả`,
                     onChange: (page: number, pageSize: number) => handleOnChangePage(page, pageSize),
                     pageSizeOptions: [3, 5, 10],
                     showSizeChanger: true,

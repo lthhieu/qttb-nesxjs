@@ -26,10 +26,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Script
-          src="/nutrient-viewer/nutrient-viewer.js"
-          strategy="beforeInteractive"
-        />
         {children}
       </body>
     </html>

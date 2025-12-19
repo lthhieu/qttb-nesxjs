@@ -19,14 +19,17 @@ const Users = async ({ searchParams }: { searchParams: Params }) => {
             next: { tags: ['users'] }
         }
     })
-    const res1 = await sendRequest<IBackendResponse<IUnit[]>>({
+    const res1 = await sendRequest<IBackendResponse<IPaginate<IUnit[]>>>({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/units`,
-        method: 'GET',
+        queryParams: { page, limit: 1000 },
         headers: {
             Authorization: `Bearer ${session?.access_token}`,
         },
+        nextOption: {
+            next: { tags: ['positions'] }
+        }
     })
-    const res2 = await sendRequest<IBackendResponse<IUnit[]>>({
+    const res2 = await sendRequest<IBackendResponse<IPaginate<IUnit[]>>>({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/positions`,
         method: 'GET',
         headers: {
@@ -44,10 +47,10 @@ const Users = async ({ searchParams }: { searchParams: Params }) => {
         <div>
             <TableUsers
                 access_token={session?.access_token ?? ''}
-                units={res1?.data ?? []}
+                units={res1?.data?.result ?? []}
                 roles={res3?.data ?? []}
                 meta={res?.data?.meta!}
-                positions={res2?.data ?? []}
+                positions={res2?.data?.result ?? []}
                 users={res?.data?.result ?? []} />
         </div>
     )

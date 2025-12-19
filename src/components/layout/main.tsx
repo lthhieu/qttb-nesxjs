@@ -4,19 +4,29 @@ import { LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Layout, Menu, theme } from 'antd';
 import Image from 'next/image';
 import Link from 'next/link';
+import { redirect } from "next/navigation";
 
 const { Header, Content, Footer } = Layout;
 
 const items = [
     { key: 1, label: <Link href="/">Trang chủ</Link> },
     { key: 2, label: <Link href="/users">Tài khoản</Link> },
+    { key: 7, label: <Link href="/positions">Chức vụ</Link> },
+    { key: 6, label: <Link href="/units">Đơn vị</Link> },
     { key: 3, label: <Link href="/documents">Văn bản</Link> },
     { key: 4, label: <Link href="/workflows">Quy trình</Link> },
     { key: 5, label: <Link href="/histories">Lịch sử</Link> },
 ]
 
 const itemsNotLogin = [
-    { key: 1, label: <Link href="/">Người dùng</Link> },
+    { key: 1, label: <Link href="/">Trang chủ</Link> },
+]
+
+const itemsUsers = [
+    { key: 1, label: <Link href="/">Trang chủ</Link> },
+    { key: 3, label: <Link href="/documents">Văn bản</Link> },
+    { key: 4, label: <Link href="/workflows">Quy trình</Link> },
+    { key: 5, label: <Link href="/histories">Lịch sử</Link> },
 ]
 
 export default function MainLayoutComponent({
@@ -45,8 +55,11 @@ export default function MainLayoutComponent({
         refetch //refetch the session
     } = authClient.useSession()
 
+    console.log(session)
+
     const handleSignout = async () => {
         await authClient.signOut();
+        return redirect('/')
     }
 
     return (
@@ -59,13 +72,14 @@ export default function MainLayoutComponent({
                     theme="light"
                     mode="horizontal"
                     defaultSelectedKeys={['1']}
-                    items={session ? items : itemsNotLogin}
+                    //@ts-ignore
+                    items={session ? session.user.role === '692027387acdfd5a8a9691ad' ? items : itemsUsers : itemsNotLogin}
                     style={{ flex: 1, minWidth: 0 }}
                 />
                 <div>{session ? <div style={{ display: 'flex', gap: 16 }}>
                     <span>{session.user.email}</span>
                     <LogoutOutlined onClick={handleSignout} style={{ cursor: 'pointer', fontSize: 24, color: '#363434ff' }} />
-                </div> : <Link href={'/login'}><LoginOutlined onClick={handleSignout} style={{ cursor: 'pointer', fontSize: 24, color: '#363434ff' }} /></Link>}</div>
+                </div> : <Link href={'/login'}><LoginOutlined style={{ cursor: 'pointer', fontSize: 24, color: '#363434ff' }} /></Link>}</div>
             </Header>
             <Content style={{ padding: '0 48px', margin: '32px 0' }}>
                 <div

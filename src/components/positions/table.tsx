@@ -4,24 +4,22 @@ import { Button, Flex, message, Popconfirm, Space, Table } from 'antd';
 import type { PopconfirmProps, TableProps } from 'antd';
 import { DeleteOutlined, EditOutlined, FolderAddOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import WorkflowModal from '@/components/workflows/modal';
 import { useRouter } from 'next/navigation';
-import { handleDeleteNewWorkflow } from '@/app/(main)/workflows/actions';
+import { handleDeletePosition } from '@/app/(main)/positions/actions';
+import PositionModal from '@/components/positions/modal';
 
 
 interface IProps {
-    workflows: IWorkflow[],
-    units: IUnit[],
     positions: IUnit[],
     access_token: string,
     meta: IMeta
 }
 
-const TableWorkflows = (props: IProps) => {
-    const { workflows, access_token, units, positions, meta } = props
+const TablePositions = (props: IProps) => {
+    const { access_token, positions, meta } = props
     const [isModalOpen, SetIsModalOpen] = useState(false)
     const [status, setStatus] = useState('')
-    const [dataUpdate, setDataUpdate] = useState<null | IWorkflow>(null)
+    const [dataUpdate, setDataUpdate] = useState<null | IUnit>(null)
     const router = useRouter()
 
 
@@ -31,15 +29,15 @@ const TableWorkflows = (props: IProps) => {
     }
     const [messageApi, contextHolder] = message.useMessage();
     const confirm = (_id: string) => {
-        deleteWorkflow(_id)
+        deleteUnit(_id)
     };
 
     const cancel: PopconfirmProps['onCancel'] = (e) => {
         // console.log(e);
     };
 
-    const deleteWorkflow = async (_id: string) => {
-        const res = await handleDeleteNewWorkflow(_id, access_token)
+    const deleteUnit = async (_id: string) => {
+        const res = await handleDeletePosition(_id, access_token)
         if (!res.data) {
             messageApi.open({
                 type: 'error',
@@ -54,17 +52,11 @@ const TableWorkflows = (props: IProps) => {
         }
     }
 
-    const columns: TableProps<IWorkflow>['columns'] = [
+    const columns: TableProps<IUnit>['columns'] = [
         {
-            title: 'Tên quy trình',
+            title: 'Tên chức vụ',
             dataIndex: 'name',
             key: 'name',
-        },
-        {
-            title: 'Phiên bản',
-            dataIndex: 'version',
-            key: 'version',
-            responsive: ['md'],
         },
         {
             title: 'Ngày tạo',
@@ -87,7 +79,7 @@ const TableWorkflows = (props: IProps) => {
                     ></Button>
 
                     <Popconfirm
-                        title="Xóa Quy trình này?"
+                        title="Xóa chức vụ này?"
                         onConfirm={() => confirm(record._id)}
                         onCancel={cancel}
                         okText="Yes"
@@ -100,16 +92,16 @@ const TableWorkflows = (props: IProps) => {
         },
     ];
     const handleOnChangePage = (page: number, pageSize: number) => {
-        router.push(`/workflows?page=${page}&limit=${pageSize}`);
+        router.push(`/positions?page=${page}&limit=${pageSize}`);
     };
     return (
         <>
             {contextHolder}
             <Flex style={{ marginBottom: 16 }} justify='space-between' align='center'>
-                <h2>Danh sách quy trình</h2>
+                <h2>Danh sách chức vụ</h2>
                 <Button onClick={showModal} type='primary' icon={<FolderAddOutlined />}>Thêm mới</Button>
             </Flex>
-            <Table<IWorkflow>
+            <Table<IUnit>
                 pagination={{
                     current: meta.current,
                     pageSize: meta.pageSize,
@@ -119,8 +111,8 @@ const TableWorkflows = (props: IProps) => {
                     pageSizeOptions: [3, 5, 10],
                     showSizeChanger: true,
                 }}
-                columns={columns} dataSource={workflows} rowKey={"_id"} />
-            <WorkflowModal
+                columns={columns} dataSource={positions} rowKey={"_id"} />
+            <PositionModal
                 setStatus={setStatus}
                 status={status}
                 access_token={access_token}
@@ -129,11 +121,9 @@ const TableWorkflows = (props: IProps) => {
                 //update info
                 setDataUpdate={setDataUpdate}
                 dataUpdate={dataUpdate}
-                units={units}
-                positions={positions}
             />
         </>
     )
 }
 
-export default TableWorkflows;
+export default TablePositions;

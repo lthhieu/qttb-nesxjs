@@ -16,19 +16,25 @@ export default async function Documents({ searchParams }: { searchParams: Params
         headers: {
             Authorization: `Bearer ${session?.access_token}`,
         },
+        nextOption: {
+            next: { tags: ['units'] }
+        }
     })
-    const res1 = await sendRequest<IBackendResponse<IWorkflow[]>>({
+    const res1 = await sendRequest<IBackendResponse<IPaginate<IWorkflow[]>>>({
         url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows/by-unit`,
+        queryParams: { page, limit },
         headers: {
             Authorization: `Bearer ${session?.access_token}`,
         },
+        nextOption: {
+            next: { tags: ['workflows'] }
+        }
     })
     return (
         <div>
-            {/* <ViewPdf /> */}
             <TableDocuments
                 access_token={session?.access_token ?? ''}
-                workflows={res1?.data ?? []}
+                workflows={res1?.data?.result ?? []}
                 meta={res?.data?.meta!}
 
                 documents={res?.data?.result ?? []} />

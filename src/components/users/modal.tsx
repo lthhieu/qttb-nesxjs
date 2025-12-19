@@ -86,7 +86,7 @@ const UserModal = (props: IProps) => {
     const validateMessages = {
         required: '${label} không được để trống',
         types: { email: '${label} không hợp lệ' },
-        pattern: { mismatch: '${label} phải thuộc tên miền vlute.edu.vn' }
+        // pattern: { mismatch: '${label} phải thuộc tên miền vlute.edu.vn' }
     }
 
     const onChange = (value: string) => {
@@ -187,7 +187,10 @@ const UserModal = (props: IProps) => {
                         style={{ marginBottom: 8 }}
                         label="Email"
                         name="email"
-                        rules={[{ required: true, pattern: /^[A-Za-z0-9]+@vlute\.edu\.vn$/ }]}
+                        rules={[{
+                            required: true,
+                            // pattern: /^[A-Za-z0-9]+@vlute\.edu\.vn$/ 
+                        }]}
                     >
                         <Input />
                     </Form.Item>
