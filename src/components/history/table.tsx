@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react';
-import { Button, Flex, message, Popconfirm, Space, Table, Tag } from 'antd';
-import type { PopconfirmProps, TableProps } from 'antd';
-import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, DownOutlined, EditOutlined, FolderAddOutlined, MinusCircleOutlined, SignatureOutlined } from '@ant-design/icons';
+import { Button, Flex, Space, Table, Tag, Tooltip } from 'antd';
+import type { TableProps } from 'antd';
+import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DownloadOutlined, DownOutlined, EditOutlined, EyeOutlined, FolderAddOutlined, MinusCircleOutlined, SignatureOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
-import SignModal from '@/components/documents/sign.modal';
+import { useState } from 'react';
+import VersionHistoryButton from '@/components/history/version.history.modal';
 
 
 interface IProps {
@@ -38,17 +38,9 @@ export const STATUS_MAP: Record<
 
 
 const TableDocumentsConfirm = (props: IProps) => {
-    const { access_token, meta, documents } = props
-    const [isModalOpen, SetIsModalOpen] = useState(false)
-    const [isSignModalOpen, SetIsSignModalOpen] = useState(false)
-    const [status, setStatus] = useState('')
-    const [dataUpdate, setDataUpdate] = useState<null | IDocument>(null)
+    const { meta, documents } = props
     const router = useRouter()
-    const [messageApi, contextHolder] = message.useMessage();
-
-    const cancel: PopconfirmProps['onCancel'] = (e) => {
-        // console.log(e);
-    };
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const columns: TableProps<IDocument>['columns'] = [
         {
@@ -89,6 +81,9 @@ const TableDocumentsConfirm = (props: IProps) => {
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
+                    <Tooltip title="Xem lịch sử ký">
+                        <VersionHistoryButton record={record} />
+                    </Tooltip>
                     <Button
                         color="pink"
                         variant="outlined"
@@ -109,7 +104,6 @@ const TableDocumentsConfirm = (props: IProps) => {
     };
     return (
         <>
-            {contextHolder}
             <Flex style={{ marginBottom: 16 }} justify='space-between' align='center'>
                 <h2>Danh sách tài liệu</h2>
             </Flex>
@@ -124,13 +118,6 @@ const TableDocumentsConfirm = (props: IProps) => {
                     showSizeChanger: true,
                 }}
                 columns={columns} dataSource={documents} rowKey={"_id"} />
-            <SignModal
-                isModalOpen={isSignModalOpen}
-                setIsModalOpen={SetIsSignModalOpen}
-                setDataUpdate={setDataUpdate}
-                dataUpdate={dataUpdate ?? null}
-                access_token={access_token}
-            />
         </>
     )
 }

@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Modal, Button, message, Space, Spin, Input } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { sendRequest } from "@/lib/fetch-wrapper";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/webpack";
 import { authClient } from "@/lib/auth-client";
@@ -34,6 +34,9 @@ export default function SignModal(props: IProps) {
     const [loadingPdf, setLoadingPdf] = useState(true);
     const [signing, setSigning] = useState(false);
     const router = useRouter()
+
+    //modal từ chối ký
+    const [rejectModal, setRejectModal] = useState({ visible: false, id: '', reason: '' });
 
     // Modal nhập mật khẩu
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -194,7 +197,7 @@ export default function SignModal(props: IProps) {
             // console.log(dataUpdate)
 
             const res = await sendRequest<IBackendResponse<any>>({
-                url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/test-update-info/${dataUpdate?._id}`,
+                url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/sign-update-info/${dataUpdate?._id}`,
                 method: "PATCH",
                 body: {
                     // Thông tin ký số
@@ -226,6 +229,36 @@ export default function SignModal(props: IProps) {
         } finally {
             setSigning(false);
         }
+    };
+
+
+
+    const handleReject = async () => {
+
+        const res = await sendRequest<IBackendResponse<any>>({
+            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/reject/${rejectModal.id}`,
+            method: "PATCH",
+            body: { reason: rejectModal.reason },
+            headers: { Authorization: `Bearer ${access_token}` },
+        });
+
+        if (res.data) {
+            messageApi.success('Từ chối thành công');
+            setSigning(true);
+            setRejectModal({ visible: false, id: '', reason: '' });
+            router.refresh();
+        } else {
+            messageApi.error(res.message)
+        }
+
+        // await sendRequest({
+        //   url: `/documents/reject/${rejectModal.id}`,
+        //   method: 'PATCH',
+        //   body: { reason: rejectModal.reason },
+        // });
+        // message.success('Từ chối thành công');
+        // setRejectModal({ visible: false, id: null, reason: '' });
+        // // refresh data
     };
 
     return (
@@ -266,6 +299,14 @@ export default function SignModal(props: IProps) {
                             disabled={!selection}
                         >
                             Xóa vị trí
+                        </Button>
+
+                        <Button
+                            danger
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => setRejectModal({ visible: true, id: dataUpdate?._id ?? 'null', reason: '' })}
+                        >
+                            Từ chối ký
                         </Button>
 
                         <Button
@@ -382,6 +423,29 @@ export default function SignModal(props: IProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onPressEnter={handleConfirmSign}
+                    size="large"
+                    autoFocus
+                />
+            </Modal>
+
+            <Modal
+                title={<span style={{ fontSize: 18, fontWeight: "bold" }}>Từ chối ký tài liệu</span>}
+                open={rejectModal.visible}
+                onOk={handleReject}
+                onCancel={() => setRejectModal({ visible: false, id: 'null', reason: '' })}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{ size: "large", type: "primary" }}
+                cancelButtonProps={{ size: "large" }}
+                centered
+                width={400}
+                zIndex={9998}
+            >
+                <Input
+                    placeholder="Nhập lý do từ chối"
+                    value={rejectModal.reason}
+                    onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                    onPressEnter={handleReject}
                     size="large"
                     autoFocus
                 />

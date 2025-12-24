@@ -11,7 +11,7 @@ export const handleCreateOrUpdateUser = async (data: any, access_token: string, 
         body.p12 = p12
     }
     const res = await sendRequest<IBackendResponse<IUser>>({
-        url: status === "CREATE" ? `${process.env.NEXT_PUBLIC_BACKEND_URI}/auth/login-by-social` : `${process.env.NEXT_PUBLIC_BACKEND_URI}/users/${dataUpdate?._id}`,
+        url: status === "CREATE" ? `${process.env.NEXT_PUBLIC_BACKEND_URI}/users` : `${process.env.NEXT_PUBLIC_BACKEND_URI}/users/${dataUpdate?._id}`,
         method: status === "CREATE" ? "POST" : "PATCH",
         headers: {
             Authorization: `Bearer ${access_token}`,

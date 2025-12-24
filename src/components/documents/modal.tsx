@@ -80,8 +80,8 @@ const DocumentModal = (props: IProps) => {
                 content: response.message,
             });
             setFileList([]);
-            handleCancel()
-            router.refresh()
+            handleCancel();
+            router.refresh();
 
         } else {
             console.log(response.error)
@@ -209,7 +209,7 @@ const DocumentModal = (props: IProps) => {
                         hidden={status === "CREATE" ? false : true}
                     >
                         <Upload {...uploadProps}>
-                            <Button icon={<UploadOutlined />}>Select File</Button>
+                            <Button icon={<UploadOutlined />}>Chọn tài liệu</Button>
                         </Upload>
                     </Form.Item>
                 </Form>

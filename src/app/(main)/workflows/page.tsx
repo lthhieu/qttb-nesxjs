@@ -40,7 +40,7 @@ export default async function Workflows({ searchParams }: { searchParams: Params
             next: { tags: ['positions'] }
         }
     })
-    console.log(res2.data?.result)
+    // console.log(res2.data?.result)
     return (
         <div>
             <TableWorkflows

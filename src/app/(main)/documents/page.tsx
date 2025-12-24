@@ -1,5 +1,4 @@
 import TableDocuments from "@/components/documents/table";
-import ViewPdf from "@/components/documents/view.pdf";
 import { auth } from "@/lib/auth";
 import { sendRequest } from "@/lib/fetch-wrapper";
 import { headers } from "next/headers";
@@ -21,7 +20,7 @@ export default async function Documents({ searchParams }: { searchParams: Params
         }
     })
     const res1 = await sendRequest<IBackendResponse<IPaginate<IWorkflow[]>>>({
-        url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows/by-unit`,
+        url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/workflows`,
         queryParams: { page, limit },
         headers: {
             Authorization: `Bearer ${session?.access_token}`,

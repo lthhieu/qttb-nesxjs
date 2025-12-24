@@ -69,6 +69,7 @@ const UserModal = (props: IProps) => {
         }
         const data = { name, email, p12: linkP12, role, unit, position }
         const response = await handleCreateOrUpdateUser(data, access_token ?? '', status, dataUpdate)
+        console.log(response)
         if (response.data) {
             messageApi.open({
                 type: 'success',
@@ -78,7 +79,7 @@ const UserModal = (props: IProps) => {
         } else {
             messageApi.open({
                 type: 'error',
-                content: 'Lỗi xảy ra'
+                content: response.message
             })
         }
     }

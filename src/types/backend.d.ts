@@ -105,16 +105,17 @@ declare global {
         "cur_step": number,
         "cur_status": string,
         "cur_link": string,
-        "info": [
-            {
-                "version": number,
-                "link": string,
-                "signers": IUserInfo[]
-            }
-        ],
+        "info": Version[],
         "createdAt": string,
         "updatedAt": string
     }
+
+    interface Version {
+        "version": number,
+        "link": string,
+        "signers": IUserInfo[],
+        error?: string
+    }[]
     interface IFile {
         filename: string,
         folder: string,
