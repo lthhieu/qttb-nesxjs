@@ -73,7 +73,7 @@ const UserModal = (props: IProps) => {
         if (response.data) {
             messageApi.open({
                 type: 'success',
-                content: 'Tạo mới thành công',
+                content: response.message,
             });
             handleCancel()
         } else {

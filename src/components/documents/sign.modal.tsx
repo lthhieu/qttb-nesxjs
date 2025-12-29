@@ -244,21 +244,12 @@ export default function SignModal(props: IProps) {
 
         if (res.data) {
             messageApi.success('Từ chối thành công');
-            setSigning(true);
+            setIsModalOpen(false); setDataUpdate(null)
             setRejectModal({ visible: false, id: '', reason: '' });
             router.refresh();
         } else {
             messageApi.error(res.message)
         }
-
-        // await sendRequest({
-        //   url: `/documents/reject/${rejectModal.id}`,
-        //   method: 'PATCH',
-        //   body: { reason: rejectModal.reason },
-        // });
-        // message.success('Từ chối thành công');
-        // setRejectModal({ visible: false, id: null, reason: '' });
-        // // refresh data
     };
 
     return (
