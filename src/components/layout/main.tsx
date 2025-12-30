@@ -55,12 +55,12 @@ export default function MainLayoutComponent({
         refetch //refetch the session
     } = authClient.useSession()
 
-    console.log(session)
-
     const handleSignout = async () => {
         await authClient.signOut();
-        return redirect('/')
+        return redirect('/login')
     }
+
+    console.log('session >>>', session);
 
     return (
         <Layout>
@@ -73,7 +73,7 @@ export default function MainLayoutComponent({
                     mode="horizontal"
                     defaultSelectedKeys={['1']}
                     //@ts-ignore
-                    items={session ? session.user.role === '692027387acdfd5a8a9691ad' ? items : itemsUsers : itemsNotLogin}
+                    items={session?.user.role ? session.user.role === '692027387acdfd5a8a9691ad' ? items : itemsUsers : itemsNotLogin}
                     style={{ flex: 1, minWidth: 0 }}
                 />
                 <div>{session ? <div style={{ display: 'flex', gap: 16 }}>
