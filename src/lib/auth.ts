@@ -1,26 +1,22 @@
-import { APIError, betterAuth } from "better-auth";
+import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
-import { createAuthMiddleware, customSession } from "better-auth/plugins";
+import { customSession } from "better-auth/plugins";
 import { sendRequest } from "@/lib/fetch-wrapper";
-import { inferAdditionalFields } from "better-auth/client/plugins";
 
 const client = new MongoClient(process.env.MONGO_URI!);
 const db = client.db();
 
 export const auth = betterAuth({
     database: mongodbAdapter(db, { client }),
+    baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-            // async mapProfileToUser(profile) {
-            //     if (profile.email !== 'hieu@vlute.edu.vn') {
-            //         throw new Error('mail không tồn tại trong dữ liệu!')
-            //     }
-            // },
         },
     },
+    trustedOrigins: [process.env.NEXT_PUBLIC_BETTER_AUTH_URL as string],
     plugins: [
         customSession(async ({ user, session }) => {
             const { email, name, image } = user;
@@ -48,8 +44,12 @@ export const auth = betterAuth({
                         await authClient.signOut();
                     }
 
-                    // Trả về null để chặn login hoàn toàn
-                    return null;
+                    return {
+                        user: null,
+                        access_token: '',
+                        refresh_token: '',
+                        session,
+                    };
                 }
 
                 // Thành công → trả về user đầy đủ
@@ -73,7 +73,12 @@ export const auth = betterAuth({
                     const { authClient } = await import("@/lib/auth-client");
                     await authClient.signOut();
                 }
-                return null;
+                return {
+                    user: null,
+                    access_token: '',
+                    refresh_token: '',
+                    session,
+                };
             }
         }),
     ],

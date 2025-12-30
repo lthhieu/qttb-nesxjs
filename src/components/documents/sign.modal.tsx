@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, Button, message, Space, Spin, Input } from "antd";
 import { CloseCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { sendRequest } from "@/lib/fetch-wrapper";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/webpack";
+
+// import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/webpack";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from 'next/navigation'
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.worker.min.js`;
 
