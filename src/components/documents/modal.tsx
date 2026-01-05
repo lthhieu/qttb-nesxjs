@@ -8,6 +8,7 @@ import { authClient } from '@/lib/auth-client';
 import type { GetProp, UploadFile, UploadProps } from 'antd';
 import dayjs from 'dayjs';
 import { STATUS_MAP } from '@/components/documents/table';
+import { handleUploadFile } from '@/app/(main)/documents/actions';
 
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
@@ -106,12 +107,7 @@ const DocumentModal = (props: IProps) => {
             formData.append('file', file as FileType);
         });
         // You can use any AJAX library you like
-        const res = await sendRequestFile<IBackendResponse<IFile>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/files/upload`,
-            method: 'post',
-            body: formData,
-            headers: { "folder_type": "documents" }
-        })
+        const res = await handleUploadFile(formData)
         if (res.data) {
             return res.data.link
         } else {
