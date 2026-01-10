@@ -4,8 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Spin, message } from "antd";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 
-GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.worker.min.js`;
-
+// GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.worker.min.js`;
+GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+).toString();
 const PDF_URL = "https://www.nutrient.io/downloads/nutrient-web-demo.pdf";
 
 interface SignArea {

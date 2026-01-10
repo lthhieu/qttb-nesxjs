@@ -68,7 +68,7 @@ const DocumentModal = (props: IProps) => {
         const { name, workflow } = values
         const link = status === "CREATE" ? await handleUpload(workflow) : ''
         const response = await sendRequest<IBackendResponse<IDocument>>({
-            url: status === "CREATE" ? `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents` : `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/${dataUpdate?._id}`,
+            url: status === "CREATE" ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/${dataUpdate?._id}`,
             method: status === "CREATE" ? "POST" : "PATCH",
             headers: {
                 Authorization: `Bearer ${access_token}`,
