@@ -201,7 +201,7 @@ export default function SignModal(props: IProps) {
             // console.log(dataUpdate)
 
             const res = await sendRequest<IBackendResponse<any>>({
-                url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/sign-update-info/${dataUpdate?._id}`,
+                url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/sign-update-info/${dataUpdate?._id}`,
                 method: "PATCH",
                 body: {
                     // Thông tin ký số
@@ -240,7 +240,7 @@ export default function SignModal(props: IProps) {
     const handleReject = async () => {
 
         const res = await sendRequest<IBackendResponse<any>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/reject/${rejectModal.id}`,
+            url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/reject/${rejectModal.id}`,
             method: "PATCH",
             body: { reason: rejectModal.reason },
             headers: { Authorization: `Bearer ${access_token}` },
@@ -321,7 +321,8 @@ export default function SignModal(props: IProps) {
                 <div style={{ position: "relative", display: "inline-block", border: "3px solid #ddd", borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
                     {loadingPdf && (
                         <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.95)", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Spin size="large" tip="Đang tải tài liệu..." />
+
+                            <Spin tip="Đang tải tài liệu..." size="large"></Spin>
                         </div>
                     )}
 

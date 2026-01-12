@@ -54,8 +54,6 @@ const TableDocuments = (props: IProps) => {
 
     const router = useRouter()
 
-    console.log(workflows)
-
     const showModal = () => {
         setStatus("CREATE")
         SetIsModalOpen(true);
@@ -71,7 +69,7 @@ const TableDocuments = (props: IProps) => {
 
     const deleteDocument = async (_id: string) => {
         const res = await sendRequest<IBackendResponse<IDocument>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URI}/documents/${_id}`,
+            url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/${_id}`,
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${access_token!}`,

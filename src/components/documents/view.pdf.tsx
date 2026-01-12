@@ -176,7 +176,7 @@ export default function SuperSmoothSignPDF() {
                 <div style={{ display: "inline-block", position: "relative", border: "2px solid #ddd", borderRadius: 10, overflow: "hidden" }}>
                     {loading && (
                         <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.9)", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Spin size="large" tip="Đang tải trang..." />
+                            <Spin tip="Đang tải tài liệu..." size="large"></Spin>
                         </div>
                     )}
 
